@@ -13,14 +13,20 @@ def chartink_alert():
     data = request.json
     print("Received:", data)
 
-    screener = data.get('scan_name', 'Unknown')
-    symbol = data.get('symbol', 'N/A')
-    price = data.get('close', 'N/A')
+    # Chartink may send different keys depending on alert type
+    screener = data.get('scan_name', 'Unknown Screener')
+    symbol = None
+    price = None
+
+    # When default Chartink webhook format is used
+    if "stocks" in data and len(data["stocks"]) > 0:
+        symbol = data["stocks"][0].get("n", "N/A")
+        price = data["stocks"][0].get("b", "N/A")
 
     message = f"🚨 *Chartink Alert!*\n📊 *Screener:* {screener}\n💹 *Symbol:* {symbol}\n💰 *Price:* {price}"
-
     send_message(message)
     return {"status": "ok"}
+
 
 def send_message(text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
