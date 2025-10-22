@@ -1,12 +1,25 @@
 from flask import Flask, request
 import requests
 import os
+import time
 
 app = Flask(__name__)
 
 # 🔹 Your Telegram Bot details
 BOT_TOKEN = "8422561933:AAEsghs2BiSmB0WuCMsZ3xzL5_2otIpDdyc"
 CHAT_ID = "1357033271"
+
+@app.route('/')
+def home():
+    return "✅ Telegram Bot is Live and Responding!"
+
+@app.route('/health')
+def health():
+    return {
+        "status": "ok",
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "message": "Chartink-FYERS bot active"
+    }
 
 @app.route('/chartink', methods=['POST'])
 def chartink_alert():
