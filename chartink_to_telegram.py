@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify
 import requests
 import os
+import time
 
 app = Flask(__name__)
 
 # ------------------ CONFIG ------------------
-TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN"
-CHAT_ID = "YOUR_CHAT_ID"
+TELEGRAM_BOT_TOKEN = "7857280968:AAG6rFmqSo6tTlUm-RqY5IBKgEn2BlCOIVI"
+CHAT_ID = "1380193077"
 # -------------------------------------------
 
 def send_telegram_message(message):
@@ -25,6 +26,13 @@ def send_telegram_message(message):
         print("Telegram exception:", str(e))
         return 500, str(e)
 
+@app.route('/health')
+def health():
+    return {
+        "status": "ok",
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "message": "Chartink-FYERS bot active"
+    }
 
 @app.route('/chartink', methods=['POST'])
 def chartink_webhook():
