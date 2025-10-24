@@ -111,16 +111,22 @@ def health():
 @app.route('/chartink', methods=['POST'])
 def chartink_webhook():
     """
-    Main webhook for Chartink alerts. Accepts JSON or form-data.
+    Robust Chartink webhook: handles JSON or form-data, multiple key variations.
     """
     try:
         data = request.get_json(force=True, silent=True)
         if not data:
             data = request.form.to_dict()
 
+        # Robust key handling
         scan_name = data.get("scan_name") or data.get("name") or "Unknown Scan"
         symbol = data.get("symbol") or data.get("stocks") or data.get("stock") or "Unknown Symbol"
         close = data.get("close") or data.get("price") or "Unknown Price"
+
+        # Handle empty strings
+        scan_name = scan_name if str(scan_name).strip() else "Unknown Scan"
+        symbol = symbol if str(symbol).strip() else "Unknown Symbol"
+        close = close if str(close).strip() else "Unknown Price"
 
         message = f"📈 {scan_name}\nSymbol: {symbol}\nClose: ₹{close}"
 
@@ -134,6 +140,7 @@ def chartink_webhook():
     except Exception as e:
         app.logger.exception("Webhook error")
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
