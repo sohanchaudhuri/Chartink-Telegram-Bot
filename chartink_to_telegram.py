@@ -6,8 +6,8 @@ import time
 app = Flask(__name__)
 
 # 🔹 Your Telegram Bot details
-BOT_TOKEN = "8422561933:AAEsghs2BiSmB0WuCMsZ3xzL5_2otIpDdyc"
-CHAT_ID = "1357033271"
+BOT_TOKEN = "7857280968:AAG6rFmqSo6tTlUm-RqY5IBKgEn2BlCOIVI"
+CHAT_ID = "1380193077"
 
 @app.route('/')
 def home():
