@@ -1,50 +1,60 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import requests
 import os
-import time
 
 app = Flask(__name__)
 
-# 🔹 Your Telegram Bot details
-BOT_TOKEN = "7857280968:AAG6rFmqSo6tTlUm-RqY5IBKgEn2BlCOIVI"
-CHAT_ID = "1380193077"
+# ------------------ CONFIG ------------------
+TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN"
+CHAT_ID = "YOUR_CHAT_ID"
+# -------------------------------------------
 
-@app.route('/')
-def home():
-    return "✅ Telegram Bot is Live and Responding!"
-
-@app.route('/health')
-def health():
-    return {
-        "status": "ok",
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "message": "Chartink-FYERS bot active"
+def send_telegram_message(message):
+    """Send a message to your Telegram chat using bot token"""
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": message
     }
+    try:
+        response = requests.post(url, json=payload)
+        if response.status_code != 200:
+            print("Telegram send error:", response.text)
+        return response.status_code, response.text
+    except Exception as e:
+        print("Telegram exception:", str(e))
+        return 500, str(e)
+
 
 @app.route('/chartink', methods=['POST'])
-def chartink_alert():
-    data = request.json
-    print("Received:", data)
+def chartink_webhook():
+    try:
+        # Try to parse JSON first
+        data = request.get_json(force=True, silent=True)
 
-    # Chartink may send different keys depending on alert type
-    screener = data.get('scan_name', 'Unknown Screener')
-    symbol = None
-    price = None
+        # Fallback to form-data if JSON is empty
+        if not data:
+            data = request.form.to_dict()
 
-    # When default Chartink webhook format is used
-    if "stocks" in data and len(data["stocks"]) > 0:
-        symbol = data["stocks"][0].get("n", "N/A")
-        price = data["stocks"][0].get("b", "N/A")
+        # Extract relevant fields
+        scan_name = data.get("scan_name") or data.get("name") or "Unknown Scan"
+        symbol = data.get("symbol") or data.get("stocks") or data.get("stock") or "Unknown Symbol"
+        close = data.get("close") or data.get("price") or "Unknown Price"
 
-    message = f"🚨 *Chartink Alert!*\n📊 *Screener:* {screener}\n💹 *Symbol:* {symbol}\n💰 *Price:* {price}"
-    send_message(message)
-    return {"status": "ok"}
+        # Construct message
+        message = f"📈 {scan_name}\nSymbol: {symbol}\nClose: ₹{close}"
 
+        # Send to Telegram
+        status_code, response_text = send_telegram_message(message)
 
-def send_message(text):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": text, "parse_mode": "Markdown"}
-    requests.post(url, json=payload)
+        print("Received payload:", data)
+        print(f"Telegram status: {status_code}, response: {response_text}")
+
+        return jsonify({"status": "Message sent", "telegram_status": status_code})
+
+    except Exception as e:
+        print("Webhook error:", str(e))
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
